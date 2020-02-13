@@ -16,3 +16,4 @@ six==1.12.0
 sqlparse==0.3.0
 tzlocal==2.0.0
 Werkzeug==0.15.5
+pyyaml==5.3
