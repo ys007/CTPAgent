@@ -5,6 +5,7 @@
 """
 
 import nmap
+import redis
 import json
 import re
 import os
@@ -76,10 +77,11 @@ def savedata(id,timest,time_format,result,number):
     mess1 = {'这里是定制的结果': '1'}
     mess1['这里是定制的结果'] = number
     two = {"detail": mess1}
-    #data = dict(one)
+    data = dict(one,**two)
     # one.keys().encode("utf-8")
     # one.values.encode("utf-8")
-    jsonData = json.dumps(one,ensure_ascii=False,default=str)
+    jsonData = json.dumps(data,ensure_ascii=False,default=str)
+    update_redis(jsonData)#将数据存入redis
 
     fileObject = open('data.json', 'w')
     fileObject.write(jsonData)
@@ -132,7 +134,7 @@ def analysisxml(raw):
 #                 index=index+1
 #                 # for i,data in enumerate(ports):
 
-def reportEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
+def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
     if not datalst:
         return ''
     if  os.path.exists(filename):
@@ -190,16 +192,25 @@ def reportEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
     print('Reprot result of xml parser to file: %s' % filename)
     book.close()
 
+# update redis
+def update_redis(jsondata):
+    r = redis.StrictRedis(host="127.0.0.1", db=0, password='1', decode_responses=True)
+    r.set("data",jsondata)#key值暂时先固定，如果有需要后边会进行改动
+    # print("redis data",r.get("data"))
 
-if __name__ == '__main__':
-    path = readpath()
-    ip = readip()
-    port = readport()
-    arguments = readarguments()
-    nm = nmap.PortScanner(nmap_search_path=('nmap', path))
-    results = nm.scan(ip, port, arguments)
+
+def results():
+    # path = readpath()
+    # ip = readip()
+    # port = readport()
+    # arguments = readarguments()
+    # nm = nmap.PortScanner(nmap_search_path=('nmap', path))
+    # results = nm.scan(ip, port, arguments)
+    #暂时先写死，上边是通过读取文件的方法
+    nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\software\Nmap\nmap.exe"))
+    results = nm.scan('127.0.0.1', '80-88', '-Pn -sS -A')
     raw = nm.get_nmap_last_output()
-    saveraw(raw)#存储原先的数据为xml
+    saveraw(raw)  # 存储原先的数据为xml
     a = nm.command_line()
     # print(ip,port,arguments)
     # print(raw)
@@ -214,7 +225,29 @@ if __name__ == '__main__':
         result = 'fail'
     else:
         result = 'success'
+        # 只有在执行成功的时候才会保存端口信息
+        # data222 = open("rawdata.xml").read() #验证data222和raw的数据是一样的
+        # print("shuchu",data222)
+        # root = parse("./rawdata.xml")
+        # rootNode = root.documentElement
+        # raw.documentElement
+        root = et.fromstring(raw)
+        print("root的根元素:", root.tag)
+        # 查看有哪些子元素
 
+        # for child_of_root in root:
+        #     print (child_of_root.tag, child_of_root.attrib)
+        #
+        # for child_of_root in root[3]:
+        #     print(child_of_root.tag, child_of_root.attrib)
+
+        # t1 = root.findall("host")
+
+        data_list = analysisxml(root)
+        file_csv = "port.xls"
+        print("data_list：", data_list)
+        # Write_csv(file_csv,data_list)
+        saveEXCEL(file_csv, data_list)
     # print(info)
     # print(keys[0])
     # print(results)
@@ -227,30 +260,12 @@ if __name__ == '__main__':
     time_format1 = datetime.strptime(datetime1, GMT_FORMAT)
     print(time_format1)
     number = '6'
-    savedata(id, timest, time_format1, result, number) #存储一些自己想要的结果
+    savedata(id, timest, time_format1, result, number)  # 存储一些自己想要的结果
 
-    # data222 = open("rawdata.xml").read() #验证data222和raw的数据是一样的
-    # print("shuchu",data222)
-    # root = parse("./rawdata.xml")
-    # rootNode = root.documentElement
-    # raw.documentElement
-    root = et.fromstring(raw)
-    print("root的根元素:",root.tag)
-    #查看有哪些子元素
+if __name__ == '__main__':
+   results()
 
-    # for child_of_root in root:
-    #     print (child_of_root.tag, child_of_root.attrib)
-    #
-    # for child_of_root in root[3]:
-    #     print(child_of_root.tag, child_of_root.attrib)
 
-    # t1 = root.findall("host")
-
-    data_list=analysisxml(root)
-    file_csv="port.xls"
-    print("data_list：",data_list)
-    # Write_csv(file_csv,data_list)
-    reportEXCEL(file_csv,data_list)
 
 
 
