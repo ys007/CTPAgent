@@ -68,22 +68,23 @@ def readarguments():
 
 
 #save extracted data.json
-def savedata(id,timest,time_format,result,number):
-    one = {"id": 1, "timest": "123123113", "datetime": "2010-01-01 19:12:12", "result": "success"}
+def savedata(id,timest,time_format,result,msg):
+    one = {"id": '1', "timest": "123123113", "datetime": "2010-01-01 19:12:12", "status": "200",'msg':"该用例执行成功"}
     one['id']=id
-    one['timest']=timest.encode("utf-8")
+    one['timest']=timest
     one['datetime']= time_format
-    one['result']=result
-    mess1 = {'这里是定制的结果': '1'}
-    mess1['这里是定制的结果'] = number
-    two = {"detail": mess1}
-    data = dict(one,**two)
+    one['status']=result
+    one['msg']=msg
+   # mess1 = {'这里是定制的结果': '1'}
+    #mess1['这里是定制的结果'] = number
+    two = {"msg": msg}
+    # data = dict(one,**two)
     # one.keys().encode("utf-8")
     # one.values.encode("utf-8")
-    jsonData = json.dumps(data,ensure_ascii=False,default=str)
+    jsonData = json.dumps(one,ensure_ascii=False,default=str)
     update_redis(jsonData)#将数据存入redis
 
-    fileObject = open('data.json', 'w')
+    fileObject = open('data.json', 'w',encoding='utf-8')
     fileObject.write(jsonData)
     fileObject.close()
 
@@ -199,32 +200,34 @@ def update_redis(jsondata):
     # print("redis data",r.get("data"))
 
 
-def results():
-    # path = readpath()
-    # ip = readip()
-    # port = readport()
-    # arguments = readarguments()
-    # nm = nmap.PortScanner(nmap_search_path=('nmap', path))
+def results(ip,port,arguments):
+    path = readpath()
+    nm = nmap.PortScanner(nmap_search_path=('nmap', path))
     # results = nm.scan(ip, port, arguments)
     #暂时先写死，上边是通过读取文件的方法
-    nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\software\Nmap\nmap.exe"))
-    results = nm.scan('127.0.0.1', '80-88', '-Pn -sS -A')
+    #nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\software\Nmap\nmap.exe"))
+    results = nm.scan(ip, port, arguments)
     raw = nm.get_nmap_last_output()
     saveraw(raw)  # 存储原先的数据为xml
     a = nm.command_line()
     # print(ip,port,arguments)
     # print(raw)
-    # print(a)
+    print(a)
     # print(results)
     # 以下为协议的解析过程，解析到自己需要的数据,是通过得到的结果直接解析的
 
     # 通过判断scaninfo来判定这条语句是否成功
     info = results['nmap']['scaninfo']
+    print("输出的info为",info)
     keys = list(info.keys())
     if keys[0] == 'error':
-        result = 'fail'
+        result = '500'# 代表nmap语句执行失败
+        msg=info[keys[0]]
+        msg=msg[0]
+        print ("msg是",msg)
     else:
-        result = 'success'
+        result = '200' #代表nmap语句执行成功
+        msg='该用例执行成功'
         # 只有在执行成功的时候才会保存端口信息
         # data222 = open("rawdata.xml").read() #验证data222和raw的数据是一样的
         # print("shuchu",data222)
@@ -251,19 +254,21 @@ def results():
     # print(info)
     # print(keys[0])
     # print(results)
-
-    id = 2
-
+    id = '2'
     GMT_FORMAT = "%a %b %d %H:%M:%S %Y"
     timest = results['nmap']['scanstats']['elapsed']
     datetime1 = results['nmap']['scanstats']['timestr']
     time_format1 = datetime.strptime(datetime1, GMT_FORMAT)
     print(time_format1)
-    number = '6'
-    savedata(id, timest, time_format1, result, number)  # 存储一些自己想要的结果
+
+    savedata(id, timest, time_format1, result, msg)  # 存储一些自己想要的结果
 
 if __name__ == '__main__':
-   results()
+
+    ip='127.0.0.1'
+    port='80-89'
+    arguments='-Pn -sS -A'
+    results(ip,port,arguments)
 
 
 
