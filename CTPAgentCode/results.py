@@ -2,6 +2,10 @@
 """
 重点是解析xml得到自己想要的结果
 将最终解析得到的数据存储为csv
+
+应该是形成两个json格式一个用于存放在redis中：{"type":"security","subType":"nmap","status":"running","owner":"测试id"}
+key是AGENTIP:PORT
+还有一个json格式是用来返回服务端响应的返回字段至少有status和msg
 """
 
 import nmap
@@ -77,16 +81,17 @@ def savedata(id,timest,time_format,result,msg):
     one['msg']=msg
    # mess1 = {'这里是定制的结果': '1'}
     #mess1['这里是定制的结果'] = number
-    two = {"msg": msg}
+    # two = {"msg": msg}
     # data = dict(one,**two)
     # one.keys().encode("utf-8")
     # one.values.encode("utf-8")
     jsonData = json.dumps(one,ensure_ascii=False,default=str)
-    update_redis(jsonData)#将数据存入redis
 
-    fileObject = open('data.json', 'w',encoding='utf-8')
-    fileObject.write(jsonData)
-    fileObject.close()
+    return jsonData
+    # 不将结果存储到文件中，直接返回一个json格式的值
+    # fileObject = open('data.json', 'w',encoding='utf-8')
+    # fileObject.write(jsonData)
+    # fileObject.close()
 
 #save raw data.xml
 def saveraw(raw):
@@ -162,7 +167,6 @@ def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
         sheet.set_column(col,col,w)
     title_style = book.add_format(title_style)
     for index,t in enumerate(title):
-
         sheet.write(0,index,t[0],title_style)
 
     row=1
@@ -177,7 +181,6 @@ def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
                 continue
             index2=index2+1
             for  i,data in enumerate(ports):
-
 
                 sheet.write(row,2,data[0],style)
                 sheet.write(row,3,data[1],style)
@@ -194,10 +197,11 @@ def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
     book.close()
 
 # update redis
-def update_redis(jsondata):
+def update_redis(owner):
     r = redis.StrictRedis(host="127.0.0.1", db=0, password='1', decode_responses=True)
-    r.set("data",jsondata)#key值暂时先固定，如果有需要后边会进行改动
-    # print("redis data",r.get("data"))
+    jsonredis={"type": "security", "subType": "nmap", "status": "running", "owner": owner}
+    r.set("127.0.0.1:80",jsonredis)#key值暂时先固定，如果有需要后边会进行改动
+    print("redis data",r.get("data"))
 
 
 def results(ip,port,arguments):
@@ -261,8 +265,10 @@ def results(ip,port,arguments):
     time_format1 = datetime.strptime(datetime1, GMT_FORMAT)
     print(time_format1)
 
-    savedata(id, timest, time_format1, result, msg)  # 存储一些自己想要的结果
-
+    owner="1"
+    update_redis(owner)  # 将数据存入redis
+    jsondata=savedata(id, timest, time_format1, result, msg)  # 存储一些自己想要的结果
+    return jsondata
 if __name__ == '__main__':
 
     ip='127.0.0.1'
