@@ -199,10 +199,11 @@ def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
 # update redis
 def update_redis(key_name,owner):
     r = redis.StrictRedis(host="127.0.0.1", db=0, password='1', decode_responses=True)
-    # key = r.get(key_name)
-    # r.delete(key_name)
     jsonredis={"type": "security", "subType": "nmap", "status": "running", "owner": owner}
     jaondata=json.dumps(jsonredis)
+
+    if r.exists(key_name):
+        r.delete(key_name)
     r.set(key_name,jaondata)#key值暂时先固定，如果有需要后边会进行改动
     # print("redis data",r.get("data"))
 
