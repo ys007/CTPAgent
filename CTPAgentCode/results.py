@@ -94,11 +94,12 @@ def savedata(id,timest,time_format,result,msg):
     # fileObject.close()
 
 #save raw data.xml
-def saveraw(raw):
+def saveraw(key_name,raw):
     # xmlraw = raw
     # dom = parseString(xmlraw)
     # xmlraw1=dom.toprettyxml(indent='')
-    f = open('rawdata.xml', 'w',encoding='utf-8')
+    xml_name='%s.xml'%key_name
+    f = open(xml_name, 'w',encoding='utf-8')
     xmlraw1=re.sub('[\r\n\f]{2,}','\n',raw)#用正则表达式去空行
     f.write(xmlraw1)
     f.close()
@@ -121,7 +122,6 @@ def analysisxml(raw):
             ports.append([portid,serv,state])
         datas_list.append({address:ports})
     return datas_list
-
 
 
 #save port information
@@ -197,14 +197,17 @@ def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
     book.close()
 
 # update redis
-def update_redis(owner):
+def update_redis(key_name,owner):
     r = redis.StrictRedis(host="127.0.0.1", db=0, password='1', decode_responses=True)
+    # key = r.get(key_name)
+    # r.delete(key_name)
     jsonredis={"type": "security", "subType": "nmap", "status": "running", "owner": owner}
-    r.set("127.0.0.1:80",jsonredis)#key值暂时先固定，如果有需要后边会进行改动
-    print("redis data",r.get("data"))
+    jaondata=json.dumps(jsonredis)
+    r.set(key_name,jaondata)#key值暂时先固定，如果有需要后边会进行改动
+    # print("redis data",r.get("data"))
 
 
-def results(ip,port,arguments):
+def results(ip,port,arguments,key):
     path = readpath()
     nm = nmap.PortScanner(nmap_search_path=('nmap', path))
     # results = nm.scan(ip, port, arguments)
@@ -212,14 +215,13 @@ def results(ip,port,arguments):
     #nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\software\Nmap\nmap.exe"))
     results = nm.scan(ip, port, arguments)
     raw = nm.get_nmap_last_output()
-    saveraw(raw)  # 存储原先的数据为xml
+    saveraw(key_name,raw)  # 存储原先的数据为xml
     a = nm.command_line()
     # print(ip,port,arguments)
     # print(raw)
     print(a)
     # print(results)
     # 以下为协议的解析过程，解析到自己需要的数据,是通过得到的结果直接解析的
-
     # 通过判断scaninfo来判定这条语句是否成功
     info = results['nmap']['scaninfo']
     print("输出的info为",info)
@@ -266,7 +268,7 @@ def results(ip,port,arguments):
     print(time_format1)
 
     owner="1"
-    update_redis(owner)  # 将数据存入redis
+    update_redis(key_name,owner)  # 将数据存入redis
     jsondata=savedata(id, timest, time_format1, result, msg)  # 存储一些自己想要的结果
     return jsondata
 if __name__ == '__main__':
@@ -274,7 +276,8 @@ if __name__ == '__main__':
     ip='127.0.0.1'
     port='80-89'
     arguments='-Pn -sS -A'
-    results(ip,port,arguments)
+    key_name="1_data"
+    results(ip,port,arguments,key_name)
 
 
 
