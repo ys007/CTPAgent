@@ -9,5 +9,9 @@
    url: http://192.168.23.14/svn/工具/nmap
    # username: root
    # password: 123
-- exec:
-   cmd: nmap -s -i
+- test:
+   mode: nmap
+   ip: 127.0.0.1
+   port: 80-89
+   arguments: -Pn -sS -A
+
