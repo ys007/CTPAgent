@@ -14,10 +14,7 @@ import json
 import re
 import os
 import time
-from xml.dom.minidom import Document  #将文件存储为xml格式
-from xml.dom.minidom import parse
 from xml.etree import ElementTree as et
-import csv
 import xlsxwriter
 from datetime import date, datetime
 
