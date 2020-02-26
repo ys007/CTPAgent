@@ -51,26 +51,6 @@ def readpath():
     #redisIP = line.split(":")
     return path
 
-
-#read ip
-def readip():
-    f = open(r"IP.txt","r")
-    ip = f.readline()
-    return ip
-
-#read port
-def readport():
-    f = open(r"port.txt","r")
-    port = f.readline()
-    return port
-
-#read arguments
-def readarguments():
-    f = open(r"arguments.txt","r")
-    arguments = f.readline()
-    return arguments
-
-
 #save extracted data.json
 def update_redis_abstract(key_name,id,timest,time_format):
     one ={"agentid": '1', "timest": "", "datetime": ""}
@@ -206,34 +186,32 @@ def update_redis_status(status,owner):  #redis 的状态信息 状态信息的ke
     # print("redis data",r.get("data"))
 
 def results(ip,port,arguments,key_name):
-    json_data={"status": "","msg":"","file":"","key":key_name}
+    # json_data={"status": "","msg":"","file":"","key":key_name}
     path = readpath()
     nm = nmap.PortScanner(nmap_search_path=('nmap', path))
     #暂时先写死，上边是通过读取文件的方法
     #nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\software\Nmap\nmap.exe"))
     results = nm.scan(ip, port, arguments)
     raw = nm.get_nmap_last_output()
-    json_data["file"]=raw
+    # json_data["file"]=raw
     # saveraw(key_name,raw)  # 存储原先的数据为xml
-    a = nm.command_line()
-    # print(ip,port,arguments)
-    # print(raw)
-    print(a)
-    # print(results)
+    # a = nm.command_line()
+    # print("raw是",raw)
+    # print(a)
     # 以下为协议的解析过程，解析到自己需要的数据,是通过得到的结果直接解析的
     # 通过判断scaninfo来判定这条语句是否成功
     info = results['nmap']['scaninfo']
-    print("输出的info为",info)
+    # print("输出的info为",info)
     keys = list(info.keys())
     if keys[0] == 'error':
-        json_data["status"] = '500'# 代表nmap语句执行失败
+        json_status = '500'# 代表nmap语句执行失败
         msg=info[keys[0]]
         msg=msg[0]
-        json_data["msg"]=msg
+        json_msg=msg
         print ("msg是",msg)
     else:
-        json_data["status"] = '200' #代表nmap语句执行成功
-        json_data["msg"]='该用例执行成功'
+        json_status = '200' #代表nmap语句执行成功
+        json_msg='该用例执行成功'
         # 只有在执行成功的时候才会保存端口信息
         # data222 = open("rawdata.xml").read() #验证data222和raw的数据是一样的
         # print("shuchu",data222)
@@ -241,7 +219,7 @@ def results(ip,port,arguments,key_name):
         # rootNode = root.documentElement
         # raw.documentElement
         root = et.fromstring(raw)
-        print("root的根元素:", root.tag)
+        # print("root的根元素:", root.tag)
         # 查看有哪些子元素
 
         # for child_of_root in root:
@@ -254,7 +232,7 @@ def results(ip,port,arguments,key_name):
 
         data_list = analysisxml(root)
         file_csv = "port.xls"
-        print("data_list：", data_list)
+        # print("data_list：", data_list)
         # Write_csv(file_csv,data_list)
         saveEXCEL(file_csv, data_list)
     # print(info)
@@ -266,11 +244,11 @@ def results(ip,port,arguments,key_name):
     datetime1 = results['nmap']['scanstats']['timestr']
     time_format1 = datetime.strptime(datetime1, GMT_FORMAT)
     # print(time_format1)
-    owner="1" #由服务端传入
-    status="running"
-    update_redis_status(status,owner)  # 将数据存入redis
-    update_redis_abstract(key_name,id,timest, time_format1)  # 存储一些概要信息
-    return json.dumps(json_data,ensure_ascii=False,default=str) #返回值
+    # owner="1" #由服务端传入
+    # status="running"
+    # update_redis_status(status,owner)  # 将数据存入redis
+    # update_redis_abstract(key_name,id,timest, time_format1)  # 存储一些概要信息   关于redis的部分暂时未写
+    return  json_status,json_msg,raw,timest#返回值
 if __name__ == '__main__':
 
     ip='127.0.0.1'
@@ -278,7 +256,7 @@ if __name__ == '__main__':
     arguments='-Pn -sS -A'
     key_name="1_data"  #这个key是对应的redis的概要信息
     re=results(ip,port,arguments,key_name)
-    print(re)
+    # print(re)
 
 
 
