@@ -48,18 +48,31 @@ def readpath():
     #redisIP = line.split(":")
     return path
 
+# update redis
+def update_redis_status(status,owner):  #redis 的状态信息 状态信息的key为ip：port
+    r = redis.StrictRedis(host="127.0.0.1", db=0, password='Aisino123', decode_responses=True)
+    jsonredis={"type": "security", "subType": "nmap", "status": status, "owner": owner}
+    key_status="127.0.0.1:80"
+    if r.exists(key_status):
+        r.delete(key_status)
+    r.set(key_status,json.dumps(jsonredis))#key值暂时先固定，如果有需要后边会进行改动
+    # print("redis data",r.get("data"))
+
+
 #save extracted data.json
-def update_redis_abstract(key_name,id,timest,time_format):
-    one ={"agentid": '1', "timest": "", "datetime": ""}
+def update_redis_abstract(key_name,id,timest,time_format,abs_status,abs_msg):
+    one ={"agentid": '1', "timest": "", "datetime": "","status":"","abs_msg":""}
     one['agentid']=id
     one['timest']=timest
     one['datetime']= time_format
+    one['status']=abs_status
+    one['abs_msg']=abs_msg
    # mess1 = {'这里是定制的结果': '1'}
     #mess1['这里是定制的结果'] = number
     # two = {"msg": msg}
     # data = dict(one,**two)
     jsonData = json.dumps(one,ensure_ascii=False,default=str)
-    r = redis.StrictRedis(host="127.0.0.1", db=0, password='1', decode_responses=True)
+    r = redis.StrictRedis(host="127.0.0.1", db=0, password='Aisino123', decode_responses=True)
     if r.exists(key_name):
         r.delete(key_name)
     r.set(key_name,jsonData)  # key值暂时先固定，如果有需要后边会进行改动
@@ -83,6 +96,7 @@ def saveraw(key_name,raw):
 
 def analysisxml(raw):
     datas_list=[]
+    datas_list_open=[]
     for host in raw.iter('host'):
         if host.find('status').get('state')=='down':
             continue
@@ -91,13 +105,17 @@ def analysisxml(raw):
         if not address:
             continue
         ports=[]
+        ports_open=[]
         for port in host.iter('port'):
             state=port.find('state').get('state','')
             portid=port.get('portid',None)
             serv=port.find('service').get('name','')
+            if state=='open':
+                ports_open.append([portid,serv,state])
             ports.append([portid,serv,state])
         datas_list.append({address:ports})
-    return datas_list
+        datas_list_open.append({address:ports_open})
+    return datas_list,datas_list_open,ports_open
 
 
 #save port information
@@ -172,17 +190,7 @@ def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
     print('Reprot result of xml parser to file: %s' % filename)
     book.close()
 
-# update redis
-def update_redis_status(status,owner):  #redis 的状态信息 状态信息的key为ip：port
-    r = redis.StrictRedis(host="127.0.0.1", db=0, password='1', decode_responses=True)
-    jsonredis={"type": "security", "subType": "nmap", "status": status, "owner": owner}
-    key_status="127.0.0.1:80"
-    if r.exists(key_status):
-        r.delete(key_status)
-    r.set(key_status,json.dumps(jsonredis))#key值暂时先固定，如果有需要后边会进行改动
-    # print("redis data",r.get("data"))
-
-def results(ip,port,arguments,key_name):
+def results(ip,port,arguments):
     # json_data={"status": "","msg":"","file":"","key":key_name}
     path = readpath()
     nm = nmap.PortScanner(nmap_search_path=('nmap', path))
@@ -202,16 +210,18 @@ def results(ip,port,arguments,key_name):
     keys = list(info.keys())
     if keys[0] == 'error':
         json_status = '500'# 代表nmap语句执行失败
+        abs_status='500'
         msg=info[keys[0]]
         msg=msg[0]
         json_msg=msg
+        abs_msg=msg
         print ("msg是",msg)
     else:
         json_status = '200' #代表nmap语句执行成功
         json_msg='该用例执行成功'
         # 只有在执行成功的时候才会保存端口信息
         # data222 = open("rawdata.xml").read() #验证data222和raw的数据是一样的
-        # print("shuchu",data222)
+        #         # print("shuchu",data222)
         # root = parse("./rawdata.xml")
         # rootNode = root.documentElement
         # raw.documentElement
@@ -227,9 +237,18 @@ def results(ip,port,arguments,key_name):
 
         # t1 = root.findall("host")
 
-        data_list = analysisxml(root)
+        data_list,datas_list_open,ports_open = analysisxml(root)
+        print("datas_list_open是",datas_list_open)
+        print("ports_open是", ports_open)
+        if ports_open==[]:
+            abs_status = '200'
+            abs_msg = ""
+        else:
+            abs_status = '500'
+            abs_msg = datas_list_open[0]
+            # print("abs_msg是",abs_msg[0])
         file_csv = "port.xls"
-        # print("data_list：", data_list)
+        print("data_list：", data_list)
         # Write_csv(file_csv,data_list)
         saveEXCEL(file_csv, data_list)
     # print(info)
@@ -244,15 +263,16 @@ def results(ip,port,arguments,key_name):
     # owner="1" #由服务端传入
     # status="running"
     # update_redis_status(status,owner)  # 将数据存入redis
-    # update_redis_abstract(key_name,id,timest, time_format1)  # 存储一些概要信息   关于redis的部分暂时未写
+    key_name = "ceshi1"
+    update_redis_abstract(key_name,id,timest, time_format1,abs_status,abs_msg)  # 存储一些概要信息   关于redis的部分暂时未写
     return  json_status,json_msg,raw,timest#返回值
 if __name__ == '__main__':
 
     ip='127.0.0.1'
-    port='80-89'
+    port='80,6379'
     arguments='-Pn -sS -A'
     key_name="1_data"  #这个key是对应的redis的概要信息
-    re=results(ip,port,arguments,key_name)
+    re=results(ip,port,arguments)#传入参数key_name 不传入
     # print(re)
 
 
