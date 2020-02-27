@@ -1,6 +1,8 @@
 import os
-#import requests  #这个是git下载用的
-#import pexpect
+from os.path import split
+
+import requests
+import pexpect
 
 
 # @app.route('/ready',methods=['get', 'post'])
@@ -33,15 +35,23 @@ import os
 #     app.run(debug=True, port=5001, host=socket.gethostbyname(socket.gethostname()))
 
 
-#def git(url, file_name):
-#    filename = os.path.join(os.getcwd(), file_name)
-#    # url = 'https://raw.github.com/ys007/CTPAgent/master/CTPAgentCode/redisIP.txt'
-#
-#    r = requests.get(url)
-#
-#    with open(filename, 'wb') as f:
-#        f.write(r.content)
-#    return 'ok'
+def git(url, file_name):
+    filename = os.path.join(os.getcwd(), file_name)
+    # url = 'https://raw.github.com/ys007/CTPAgent/master/CTPAgentCode/redisIP.txt'
+
+    r = requests.get(url)
+
+    with open(filename, 'wb') as f:
+        f.write(r.content)
+
+    # if os.path.exists()
+    print(os.getcwd()+"\\"+file_name)
+    if os.path.isfile(os.getcwd()+"\\"+file_name):
+        print("ok")
+        return "ok"
+    else:
+        print("fail")
+        return "fail"
 
 def svn(setting):
     dist = setting['dist']
@@ -53,9 +63,19 @@ def svn(setting):
     path = svn_url[post + 1:]
     setting['url'] = svn_url
     setting['dist'] = str(dist + "\\" + path)
-    # print(setting['dist'])
     cmd = 'svn export %(url)s %(dist)s --username %(user)s --password %(pwd)s' % setting
     os.system(cmd)
+    print(dist)
+    if os.path.isfile(dist + "\\" + getConfig(svn_url)):
+        print("ok")
+        return "ok"
+    else:
+        print("fail")
+        return "fail"
+
+
+def getConfig(url):
+    return url.split("/")[-1]
 
 
 if __name__ == '__main__':
@@ -74,5 +94,6 @@ if __name__ == '__main__':
         # 下载到的路径
         "dist": "C:\\2.12"
     }
-    svn(setting=setting)
-    pass
+    # svn(setting=setting)
+    # pass
+    git(0,'redisIP.txt')
