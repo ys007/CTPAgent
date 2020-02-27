@@ -41,6 +41,11 @@ DEFAULT_STYLE={
         'bottom': 2  # 底边框
 }
 
+def readIP():
+    f = open(r"redisIP.txt","r")
+    line = f.readline()
+    redisIP = line.split(":")
+    return redisIP
 #read the nmap.exe path
 def readpath():
     f = open(r"path.txt","r")
@@ -72,7 +77,7 @@ def update_redis_abstract(key_name,id,timest,time_format,abs_status,abs_msg):
     # two = {"msg": msg}
     # data = dict(one,**two)
     jsonData = json.dumps(one,ensure_ascii=False,default=str)
-    r = redis.StrictRedis(host="127.0.0.1", db=0, password='Aisino123', decode_responses=True)
+    r = redis.StrictRedis(host=readIP()[0], db=0, password=readIP()[1], decode_responses=True)
     if r.exists(key_name):
         r.delete(key_name)
     r.set(key_name,jsonData)  # key值暂时先固定，如果有需要后边会进行改动
@@ -106,34 +111,35 @@ def analysisxml(raw):
             continue
         ports=[]
         ports_open=[]
+        ports_closed=[]
+        ports_filtered=[]
+        ports_unfilterd=[]
+        ports_Ofiltered=[]
+        ports_Cfiltered=[]
         for port in host.iter('port'):
             state=port.find('state').get('state','')
             portid=port.get('portid',None)
             serv=port.find('service').get('name','')
             if state=='open':
-                ports_open.append([portid,serv,state])
-            ports.append([portid,serv,state])
+                # ports_open.append([portid,serv,state])
+                ports_open.append(portid)
+            if state=='closed':
+                ports_closed.append(portid)
+            if state=='Filtered':
+                ports_filtered.append(portid)
+            if state=='unfilterd':
+                ports_unfilterd.append(portid)
+            if state=='Open|filtered':
+                ports_Ofiltered.append(portid)
+            if state=='Closed|filtered':
+                ports_Cfiltered.append(portid)
+            ports.append([portid, serv, state])
         datas_list.append({address:ports})
         datas_list_open.append({address:ports_open})
-    return datas_list,datas_list_open,ports_open
+    return datas_list,ports_open,ports_closed,ports_filtered,ports_unfilterd,ports_Ofiltered,ports_Cfiltered
 
 
 #save port information
-# def Write_csv(f_csv,datas): #写入csv文件中
-#     # file_csv = "test.csv"  # csv文件名
-#     headers = ["id","ip", "port", "state", "service"]
-#     with open(f_csv, "w") as csvfile:
-#         writer = csv.writer(csvfile)
-#         writer.writerow(headers)#写入标题
-#         index=0
-#         for index,item in enumerate(datas):
-#             for ip,ports in item.items():
-#                 port_num=len(ports)
-#                 if not ports:
-#                     continue
-#                 index=index+1
-#                 # for i,data in enumerate(ports):
-
 def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
     if not datalst:
         return ''
@@ -218,42 +224,26 @@ def results(ip,port,arguments):
         print ("msg是",msg)
     else:
         json_status = '200' #代表nmap语句执行成功
+        abs_status = '200'
         json_msg='该用例执行成功'
         # 只有在执行成功的时候才会保存端口信息
         # data222 = open("rawdata.xml").read() #验证data222和raw的数据是一样的
-        #         # print("shuchu",data222)
         # root = parse("./rawdata.xml")
         # rootNode = root.documentElement
         # raw.documentElement
         root = et.fromstring(raw)
         # print("root的根元素:", root.tag)
         # 查看有哪些子元素
-
         # for child_of_root in root:
         #     print (child_of_root.tag, child_of_root.attrib)
-        #
-        # for child_of_root in root[3]:
-        #     print(child_of_root.tag, child_of_root.attrib)
-
         # t1 = root.findall("host")
 
-        data_list,datas_list_open,ports_open = analysisxml(root)
-        print("datas_list_open是",datas_list_open)
-        print("ports_open是", ports_open)
-        if ports_open==[]:
-            abs_status = '200'
-            abs_msg = ""
-        else:
-            abs_status = '500'
-            abs_msg = datas_list_open[0]
-            # print("abs_msg是",abs_msg[0])
+        datas_list,ports_open,ports_closed,ports_filtered,ports_unfilterd,ports_Ofiltered,ports_Cfiltered = analysisxml(root)
+        abs_msg="open:%d,closed:%d,filtered:%d,unfilterd:%d,Open|filtered:%d,Closed|filtered:%d"%(len(ports_open),len(ports_closed),len(ports_filtered),len(ports_unfilterd),len(ports_Ofiltered),len(ports_Cfiltered))
+        print("abs_msg是", abs_msg)
         file_csv = "port.xls"
-        print("data_list：", data_list)
-        # Write_csv(file_csv,data_list)
-        saveEXCEL(file_csv, data_list)
-    # print(info)
-    # print(keys[0])
-    # print(results)
+        print("data_list：", datas_list)
+        saveEXCEL(file_csv, datas_list)
     id = '1'
     GMT_FORMAT = "%a %b %d %H:%M:%S %Y"
     timest = results['nmap']['scanstats']['elapsed']
@@ -269,7 +259,7 @@ def results(ip,port,arguments):
 if __name__ == '__main__':
 
     ip='127.0.0.1'
-    port='80,6379'
+    port='80-84'
     arguments='-Pn -sS -A'
     key_name="1_data"  #这个key是对应的redis的概要信息
     re=results(ip,port,arguments)#传入参数key_name 不传入
