@@ -1,7 +1,5 @@
 import yaml
-import os
-#from results import results
-from monitorClient import yamlConfigFilePath, yamlConfigFileHandle
+from monitorClient import workspacePath, yamlConfigFileHandle
 from download import svn
 import globalvar as gl
 from results import results
@@ -10,8 +8,6 @@ try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
-
-gl._init()  # 初始化全局变量管理模块
 
 #yaml配置文件的格式为：
 #- download:
@@ -70,7 +66,7 @@ def execYamlConfig(list_a):
                     # svn密码
                     "pwd": 'caizhongbao',
                     # 下载到的路径
-                    "dist": yamlConfigFilePath
+                    "dist": workspacePath
                 }
                 # os.rename(image, new_file)
 
@@ -84,7 +80,7 @@ def execYamlConfig(list_a):
                     return {"status": '500', "msg": "从配置库获取工具失败，无法执行后续测试！", "file": '', "key": gl.get_value('key')}
 
             if k == 'test':
-                mode = i['test']['mode']
+                mode = i['test']['subtype']
                 if mode == 'nmap':
                     print('此处调用李帅印写的执行nmap代码，此代码需在成功后返回ok，当判断返回值为ok后才能执行后续的代码')
                     ip = i['test']['ip']
@@ -93,7 +89,6 @@ def execYamlConfig(list_a):
 
                     # 此函数当前的返回值为执行结果，需要改一下，返回是否执行成功，当前返回的值作为全局变量使用
                     status, msg, resultFile, time = results(ip, port, arguments)
-
                 break
             else:
                 print(k)

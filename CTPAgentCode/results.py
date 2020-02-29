@@ -17,6 +17,7 @@ import time
 from xml.etree import ElementTree as et
 import xlsxwriter
 from datetime import date, datetime
+import globalvar as gl
 
 TITLE=[
     (u'序号',8),
@@ -66,12 +67,12 @@ def update_redis_status(status,owner):  #redis 的状态信息 状态信息的ke
 
 #save extracted data.json
 def update_redis_abstract(key_name,id,timest,time_format,abs_status,abs_msg):
-    one ={"agentid": '1', "timest": "", "datetime": "","status":"","abs_msg":""}
+    one ={"agentid": '1', "timest": "", "datetime": "","status":"","msg":""}
     one['agentid']=id
     one['timest']=timest
     one['datetime']= time_format
     one['status']=abs_status
-    one['abs_msg']=abs_msg
+    one['msg']=abs_msg
    # mess1 = {'这里是定制的结果': '1'}
     #mess1['这里是定制的结果'] = number
     # two = {"msg": msg}
@@ -80,7 +81,7 @@ def update_redis_abstract(key_name,id,timest,time_format,abs_status,abs_msg):
     r = redis.StrictRedis(host=readIP()[0], db=0, password=readIP()[1], decode_responses=True)
     if r.exists(key_name):
         r.delete(key_name)
-    r.set(key_name,jsonData)  # key值暂时先固定，如果有需要后边会进行改动
+    r.set(key_name,jsonData)
 
     # 不将结果存储到文件中，直接返回一个json格式的值
     # fileObject = open('data.json', 'w',encoding='utf-8')
@@ -199,7 +200,7 @@ def saveEXCEL(filename,datalst,title=TITLE,style=DEFAULT_STYLE,**kwargs):
 def results(ip,port,arguments):
     # json_data={"status": "","msg":"","file":"","key":key_name}
     path = readpath()
-    nm = nmap.PortScanner(nmap_search_path=('nmap', path))
+    nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\Program Files (x86)\Nmap\nmap.exe"))
     #暂时先写死，上边是通过读取文件的方法
     #nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\software\Nmap\nmap.exe"))
     results = nm.scan(ip, port, arguments)
@@ -253,7 +254,7 @@ def results(ip,port,arguments):
     # owner="1" #由服务端传入
     # status="running"
     # update_redis_status(status,owner)  # 将数据存入redis
-    key_name = "ceshi1"
+    key_name = gl.get_value("key")
     update_redis_abstract(key_name,id,timest, time_format1,abs_status,abs_msg)  # 存储一些概要信息   关于redis的部分暂时未写
     return  json_status,json_msg,raw,timest#返回值
 if __name__ == '__main__':

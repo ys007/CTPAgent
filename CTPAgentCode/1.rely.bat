@@ -1,1 +1,1 @@
-pip install -r req.txt  pip -i https://pypi.douban.com/simple
+pip install -r req.txt

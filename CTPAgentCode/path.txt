@@ -1,1 +1,1 @@
-C:\software\Nmap\nmap.exe
+C:\Program Files (x86)\Nmap\nmap.exe
