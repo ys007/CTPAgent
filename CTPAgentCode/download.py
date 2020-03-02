@@ -35,10 +35,10 @@ import pexpect
 #     app.run(debug=True, port=5001, host=socket.gethostbyname(socket.gethostname()))
 
 
-def git(url, file_name):
+def git(url):
+    # url = 'https://raw.githubusercontent.com/ys007/CTPAgent/master/CTPAgentCode/testConfig.yaml'
+    file_name =getConfig(url)
     filename = os.path.join(os.getcwd(), file_name)
-    # url = 'https://raw.github.com/ys007/CTPAgent/master/CTPAgentCode/redisIP.txt'
-
     r = requests.get(url)
 
     with open(filename, 'wb') as f:
@@ -96,4 +96,4 @@ if __name__ == '__main__':
     }
     # svn(setting=setting)
     # pass
-    git(0,'redisIP.txt')
+    git('https://raw.githubusercontent.com/ys007/CTPAgent/master/CTPAgentCode/testConfig.yaml')
