@@ -1,27 +1,21 @@
-import os
-from xml.etree import ElementTree as et
-def config():
-    SVN_username=''
-    SVN_password=''
-    SVN_path=''
-    nmap_path=''
-    config = open("config.xml").read()
-    root = et.fromstring(config)
-    for child_of_root in root:
-        if child_of_root.tag == 'messages':
-            for child_of_root2 in child_of_root:
-                if child_of_root2.tag == 'message':
-                    SVN_username = child_of_root2.get('SVN_username')
-                    SVN_password = child_of_root2.get('SVN_password')
-        if child_of_root.tag == 'directions':
-            for child_of_root2 in child_of_root:
-                if child_of_root2.tag == 'direction':
-                    SVN_path = child_of_root2.get('SVN_path')
-                    nmap_path = child_of_root2.get('nmap_path')
-                # print(child_of_root2.tag, child_of_root2.attrib)
-    return SVN_username,SVN_password,SVN_path,nmap_path
+import os, socket
+from dotenv import load_dotenv
 
-if __name__ == '__main__':
-    re=config()
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
-    print("root是",re)
+
+class Config(object):
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+         'sqlite:///' + os.path.join(basedir, 'app.db')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    AGENT_IP = socket.gethostbyname(socket.gethostname())
+    AGENT_PORT = '5001'
+
+    YAML_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),"testConfig.yaml")
+
+    REDIS_IP = '127.0.0.1'
+    REDIS_PASSWORD = 'Aisino_u3'
+

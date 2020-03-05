@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<config>
-    <messages>
-        <message SVN_username="lsy" SVN_password="123"/>
-    </messages>
-    <directions>
-        <direction SVN_path="" nmap_path="C:\Program Files (x86)\Nmap\nmap.exe"/>
-    </directions>
-</config>
