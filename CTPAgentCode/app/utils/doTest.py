@@ -1,7 +1,7 @@
 import yaml
 import os
 from app.utils.results import results
-from app.utils.download import git,svn
+from app.utils.util import download
 import config
 from config import Config
 
@@ -12,10 +12,10 @@ except ImportError:
 
 #yaml配置文件的格式为：
 #- download:
-#   mode: git
+#   mode: 0
 #   url: http://192.168.23.14/svn/工具/nmap
 #- download:
-#   mode: svn
+#   mode: 1
 #   url: http://192.168.23.14/svn/工具/nmap
 #   username: root
 #   password: 123
@@ -58,25 +58,8 @@ def execYamlConfig(list_a, key):
                 mode = i['download']['mode']
                 url = i['download']['url']
                 print('此处调用才中宝写的代码，此代码需在成功后返回ok，当判断返回值为ok后才能执行后续的代码')
-                if mode == 'git':
-                    ret = git(url)
 
-                if mode == 'svn':
-                    setting = {
-                        # svn 的本地安装路径
-                        'svn': 'C:\\Program Files\\TortoiseSVN\\bin',
-                        # 需要下载的svn文件
-                        "url": url,
-                        # svn账号
-                        "user": 'caizhongbao',
-                        # svn密码
-                        "pwd": 'caizhongbao',
-                        # 下载到的路径
-                        "dist": config.basedir
-                    }
-                    # os.rename(image, new_file)
-                    ret = svn(setting=setting)
-
+                ret = download(mode, url)
                 if ret == 'ok':
                     break
 

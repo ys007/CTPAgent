@@ -19,3 +19,8 @@ class Config(object):
     REDIS_IP = '127.0.0.1'
     REDIS_PASSWORD = 'Aisino_u3'
 
+    SVN_PATH = "C:\\Program Files\\TortoiseSVN\\bin"
+    SVN_USER = 'caizhongbao'
+    SVN_PWD = 'caizhongbao'
+
+    NMAP_PATH = "C:\\Program Files (x86)\\Nmap\\nmap.exe"

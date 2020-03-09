@@ -1,10 +1,4 @@
-# coding=utf-8
-
-import nmap,redis,json,re,os,time,xlsxwriter
-from xml.etree import ElementTree as et
-from datetime import date, datetime
-
-
+#coding=utf-8
 """
 重点是解析xml得到自己想要的结果
 将最终解析得到的数据存储为csv
@@ -14,74 +8,49 @@ key是AGENTIP:PORT
 还有一个json格式是用来返回服务端响应的返回字段至少有status和msg
 """
 
+import nmap
+import re
+import os
+import time
+from xml.etree import ElementTree as et
+import xlsxwriter
+from datetime import date, datetime
+from app.utils.util import sendStatusToRedis
+from config import Config
 
-TITLE = [
-    (u'序号', 8),
-    ('IP', 22),
-    (u'端口', 10),
-    (u'服务', 18),
-    (u'开放状态', 15),
+TITLE=[
+    (u'序号',8),
+    ('IP',22),
+    (u'端口',10),
+    (u'服务',18),
+    (u'开放状态',15),
 ]
 
-DEFAULT_STYLE = {
-    'font_size': 12,  # 字体大小
-    'bold': False,  # 是否粗体
-    # 'bg_color': '#101010',  # 表格背景颜色
-    'font_color': 'black',  # 字体颜色
-    'align': 'left',  # 居中对齐
-    'valign': 'vcenter',
-    'font_name': 'Courier New',
-    'top': 2,  # 上边框
-    # 后面参数是线条宽度
-    'left': 2,  # 左边框
-    'right': 2,  # 右边框
-    'bottom': 2  # 底边框
+DEFAULT_STYLE={
+        'font_size': 12,  # 字体大小
+        'bold': False,  # 是否粗体
+        # 'bg_color': '#101010',  # 表格背景颜色
+        'font_color': 'black',  # 字体颜色
+        'align': 'left',  # 居中对齐
+        'valign':'vcenter',
+        'font_name':'Courier New',
+        'top': 2,  # 上边框
+        # 后面参数是线条宽度
+        'left': 2,  # 左边框
+        'right': 2,  # 右边框
+        'bottom': 2  # 底边框
 }
 
+#save extracted data.json
+def update_redis_abstract(id,timest,time_format,abs_status,abs_msg):
+    one ={"agentid": '1', "timest": "", "datetime": "","status":"","msg":""}
+    one['agentid']=id
+    one['timest']=timest
+    one['datetime']= time_format
+    one['status']=abs_status
+    one['msg']=abs_msg
 
-def readIP():
-    f = open(r"redisIP.txt", "r")
-    line = f.readline()
-    redisIP = line.split(":")
-    return redisIP
-
-
-# read the nmap.exe path
-def readpath():
-    f = open(r"path.txt", "r")
-    path = f.readline()
-    # redisIP = line.split(":")
-    return path
-
-
-# update redis
-def update_redis_status(status, owner):  # redis 的状态信息 状态信息的key为ip：port
-    r = redis.StrictRedis(host="127.0.0.1", db=0, password='Aisino123', decode_responses=True)
-    jsonredis = {"type": "security", "subType": "nmap", "status": status, "owner": owner}
-    key_status = "127.0.0.1:80"
-    if r.exists(key_status):
-        r.delete(key_status)
-    r.set(key_status, json.dumps(jsonredis))  # key值暂时先固定，如果有需要后边会进行改动
-    # print("redis data",r.get("data"))
-
-
-# save extracted data.json
-def update_redis_abstract(key_name, id, timest, time_format, abs_status, abs_msg):
-    one = {"agentid": '1', "timest": "", "datetime": "", "status": "", "abs_msg": ""}
-    one['agentid'] = id
-    one['timest'] = timest
-    one['datetime'] = time_format
-    one['status'] = abs_status
-    one['abs_msg'] = abs_msg
-    # mess1 = {'这里是定制的结果': '1'}
-    # mess1['这里是定制的结果'] = number
-    # two = {"msg": msg}
-    # data = dict(one,**two)
-    jsonData = json.dumps(one, ensure_ascii=False, default=str)
-    r = redis.StrictRedis(host=readIP()[0], db=0, password=readIP()[1], decode_responses=True)
-    if r.exists(key_name):
-        r.delete(key_name)
-    r.set(key_name, jsonData)  # key值暂时先固定，如果有需要后边会进行改动
+    sendStatusToRedis(one)
 
     # 不将结果存储到文件中，直接返回一个json格式的值
     # fileObject = open('data.json', 'w',encoding='utf-8')
@@ -200,10 +169,8 @@ def saveEXCEL(filename, datalst, title=TITLE, style=DEFAULT_STYLE, **kwargs):
 
 def results(ip, port, arguments):
     # json_data={"status": "","msg":"","file":"","key":key_name}
-    path = readpath()
-    nm = nmap.PortScanner(nmap_search_path=('nmap', path))
-    # 暂时先写死，上边是通过读取文件的方法
-    # nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\software\Nmap\nmap.exe"))
+    #nm = nmap.PortScanner(nmap_search_path=('nmap', r"C:\Program Files (x86)\Nmap\nmap.exe"))
+    nm = nmap.PortScanner(nmap_search_path=('nmap', Config.NMAP_PATH))
     results = nm.scan(ip, port, arguments)
     raw = nm.get_nmap_last_output()
     # json_data["file"]=raw
@@ -240,11 +207,8 @@ def results(ip, port, arguments):
         #     print (child_of_root.tag, child_of_root.attrib)
         # t1 = root.findall("host")
 
-        datas_list, ports_open, ports_closed, ports_filtered, ports_unfilterd, ports_Ofiltered, ports_Cfiltered = analysisxml(
-            root)
-        abs_msg = "open:%d,closed:%d,filtered:%d,unfilterd:%d,Open|filtered:%d,Closed|filtered:%d" % (
-        len(ports_open), len(ports_closed), len(ports_filtered), len(ports_unfilterd), len(ports_Ofiltered),
-        len(ports_Cfiltered))
+        datas_list,ports_open,ports_closed,ports_filtered,ports_unfilterd,ports_Ofiltered,ports_Cfiltered = analysisxml(root)
+        abs_msg="open:%d,closed:%d,filtered:%d,unfilterd:%d,Open|filtered:%d,Closed|filtered:%d"%(len(ports_open),len(ports_closed),len(ports_filtered),len(ports_unfilterd),len(ports_Ofiltered),len(ports_Cfiltered))
         print("abs_msg是", abs_msg)
         file_csv = "port.xls"
         print("data_list：", datas_list)
@@ -255,17 +219,20 @@ def results(ip, port, arguments):
     datetime1 = results['nmap']['scanstats']['timestr']
     time_format1 = datetime.strptime(datetime1, GMT_FORMAT)
     # print(time_format1)
-    # owner="1" #由服务端传入
-    # status="running"
-    # update_redis_status(status,owner)  # 将数据存入redis
-    key_name = "ceshi1"
-    update_redis_abstract(key_name, id, timest, time_format1, abs_status, abs_msg)  # 存储一些概要信息   关于redis的部分暂时未写
-    # return  json_status,json_msg,raw,timest#返回值
-# if __name__ == '__main__':
-#
-#     ip='127.0.0.1'
-#     port='80-84'
-#     arguments='-Pn -sS -A'
-#     key_name="1_data"  #这个key是对应的redis的概要信息
-#     re=results(ip,port,arguments)#传入参数key_name 不传入
-#     # print(re)
+    update_redis_abstract(id,timest, time_format1,abs_status,abs_msg)  # 存储一些概要信息   关于redis的部分暂时未写
+    return  json_status,json_msg,raw,timest #返回值
+
+if __name__ == '__main__':
+
+    ip='127.0.0.1'
+    port='80-84'
+    arguments='-Pn -sS -A'
+    key_name="1_data"  #这个key是对应的redis的概要信息
+    re=results(ip,port,arguments)#传入参数key_name 不传入
+    # print(re)
+
+
+
+
+
+

@@ -1,36 +1,8 @@
 import os
 import requests
-
-
-# @app.route('/ready',methods=['get', 'post'])
-# def ready():
-#     return 'ok'
-#
-#
-# @app.route('/git',method = ['get','post'])
-# def git():
-#     filename = os.path.join(os.getcwd(),'redisIP.txt')
-#     url = 'https://raw.github.com/ys007/CTPAgent/master/CTPAgentCode/redisIP.txt'
-#
-#     r = requests.get(url)
-#
-#     with open(filename, 'wb') as f:
-#         f.write(r.content)
-#
-#     return 'ok'
-#
-# @app.route('/svn',methods = ['get','post'])
-# def svn():
-#     url='svnurl'
-#     fp = urllib.urlopen(url)
-#     data = fp.read()
-#     print(data)
-# #无svn环境,待后续测试
-#
-#
-# if __name__ == '__main__':
-#     app.run(debug=True, port=5001, host=socket.gethostbyname(socket.gethostname()))
-
+import config
+from config import Config
+import redis, json
 
 def git(url):
     # url = 'https://raw.githubusercontent.com/ys007/CTPAgent/master/CTPAgentCode/testConfig.yaml'
@@ -50,7 +22,19 @@ def git(url):
         print("fail")
         return "fail"
 
-def svn(setting):
+def svn(url):
+    setting = {
+        # svn 的本地安装路径
+        'svn': Config.SVN_PATH,
+        # 需要下载的svn文件
+        "url": url,
+        # svn账号
+        "user": Config.SVN_USER,
+        # svn密码
+        "pwd": Config.SVN_PWD,
+        # 下载到的路径
+        "dist": config.basedir
+    }
     dist = setting['dist']
     os.chdir(setting['svn'])
     # 这里可能会出现换行情况
@@ -73,6 +57,30 @@ def svn(setting):
 
 def getConfig(url):
     return url.split("/")[-1]
+
+#下载函数，mode 0：git；1：svn；
+def download(mode, url):
+    ret = 'fail'
+    if mode == '0':
+        ret = git(url)
+    if mode == '1':
+        ret = svn(url)
+    return ret
+
+#向redis发送信息的公共函数
+def sendStatusToRedis(payload, mode='update'):
+    r = redis.StrictRedis(host=Config.REDIS_IP, db=0, password=Config.REDIS_PASSWORD, decode_responses=True)
+    if mode == 'update':
+        temp = json.dumps(payload)
+        statusKey = Config.AGENT_IP + ':' + Config.AGENT_PORT
+        if r.exists(statusKey):
+            r.delete(statusKey)
+        r.set(statusKey, temp)
+        print(temp)
+    if mode == 'delete':
+        r.delete(statusKey)
+    print ('发送到 redis', statusKey)
+    return
 
 
 if __name__ == '__main__':

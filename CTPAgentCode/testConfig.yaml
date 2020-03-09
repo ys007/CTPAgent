@@ -1,9 +1,9 @@
 ﻿# 文件名config.yaml
+- download:
+   mode: 0
+   url: http://192.168.23.14/工具/nmap
 #- download:
-#   mode: git
-#   url: http://192.168.23.14/工具/nmap
-#- download:
-#   mode: svn
+#   mode: 1
 #   url: http://192.168.23.14/svn/工具/nmap
 - test:
    type: security
