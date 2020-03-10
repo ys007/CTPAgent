@@ -5,16 +5,15 @@ import app
 from app.main import bp
 from flask import render_template, session, jsonify, g, flash, redirect, url_for, Response, send_file, request
 # from times import sleeptime
-import config
-from config import Config
+from config import Config, logger
 from app.utils.doTest import DoTest
 from app.utils.util import download, sendStatusToRedis
 from concurrent.futures import ThreadPoolExecutor
 import atexit
 
-
 #程序启动后即调用此函数，向redis上报本机状态
 def pushStatusIdle():
+    logger.debug('程序启动，向redis上报自己的状态')
     print('程序启动上报redis自己的状态')
     payload = {'type': 'security', 'subType': 'nmap', 'status': 'idle', 'owner': ''}
     sendStatusToRedis(payload)
@@ -28,6 +27,7 @@ def before_request():
 #准备接口：agent去指定配置库中获取yaml测试文件【文件url服务端会传入】，以及agent自身需要准备的任务。
 @bp.route('/ready', methods=['get', 'post'])
 def ready():
+    logger.debug('收到ready指令，进入ready函数')
     ret = 'false'
     print('在ready分支里面')
     global owner
@@ -50,6 +50,7 @@ def ready():
 #执行接口：agent根据之前获取的yaml测试文件执行测试并将测试结果写入redis【redis的key由服务端传入】
 @bp.route('/run', methods=['get', 'post'])
 def run():
+    logger.debug('收到run指令，进入run函数')
     print('进入执行分支')
     executor = ThreadPoolExecutor()
     global flag
@@ -84,6 +85,7 @@ def do_update(key):
 #取消接口：agent删除之前获取的yaml测试文件。
 @bp.route('/cancel', methods=['get', 'post'])
 def cancel():
+    logger.debug('收到cancel指令，进入cancel函数')
     print ('进入取消分支')
     #1、删除yaml文件
     if os.path.exists(Config.YAML_FILE_PATH):  # 如果文件存在
@@ -102,6 +104,7 @@ def cancel():
 #程序正常退出前执行此函数，删除redis中状态信息，如果程序异常退出则不执行此函数
 def deleteRedisStatus():
     sendStatusToRedis('none', 'delete')
+    logger.debug('正常退出，删除redis中的状态信息')
     print ('正常退出，删除redis中的状态信息')
 
 atexit.register(deleteRedisStatus)

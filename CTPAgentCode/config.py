@@ -4,6 +4,13 @@ from dotenv import load_dotenv
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
+import logging
+import logging.config
+
+config = {    "key1":"value1"     }
+
+logging.config.fileConfig("logger.conf")
+logger = logging.getLogger("agent")
 
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'

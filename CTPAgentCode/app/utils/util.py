@@ -1,7 +1,7 @@
 import os
 import requests
 import config
-from config import Config
+from config import Config, logger
 import redis, json
 
 def git(url):
@@ -19,6 +19,7 @@ def git(url):
         print("ok")
         return "ok"
     else:
+        logger.error('git下载后没有找到该文件')
         print("fail")
         return "fail"
 
@@ -51,6 +52,7 @@ def svn(url):
         print("ok")
         return "ok"
     else:
+        logger.error('svn下载后没有找到该文件')
         print("fail")
         return "fail"
 
@@ -77,9 +79,10 @@ def sendStatusToRedis(payload, mode='update'):
             r.delete(statusKey)
         r.set(statusKey, temp)
         print(temp)
+        logger.info('发送到redis, 内容为：', temp)
     if mode == 'delete':
         r.delete(statusKey)
-    print ('发送到 redis', statusKey)
+        logger.info('删除redis中的key', statusKey)
     return
 
 

@@ -3,7 +3,7 @@ import os
 from app.utils.results import results
 from app.utils.util import download
 import config
-from config import Config
+from config import Config, logger
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -34,6 +34,7 @@ except ImportError:
 
 def DoTest(key):
     # 读取配置文件内容，配置文件yamlConfigFileHandle是在monitorClient中定义的
+    logger.debug('调用DoTest函数')
     yaml_file = open(Config.YAML_FILE_PATH, 'r', encoding='utf-8')
     data = yaml.load(yaml_file)
     print("data_type:", type(data))
@@ -64,6 +65,7 @@ def execYamlConfig(list_a, key):
                     break
 
                 else:
+                    logger.error("下载文件失败！")
                     print('从配置库获取工具失败，无法执行后续测试！')
                     return {"status": '500', "msg": "从配置库获取工具失败，无法执行后续测试！", "file": '', "key": key}
 
@@ -79,6 +81,7 @@ def execYamlConfig(list_a, key):
                     status, msg, resultFile, time = results(ip, port, arguments)
                 break
             else:
+                logger.error("yaml文件中的第一级关键字不识别:", k)
                 print(k)
                 break
 

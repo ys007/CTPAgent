@@ -1,2 +1,2 @@
-chomd 777 monitorClient.py
-python monitorClient.py
+chomd 777 agent.py
+python agent.py

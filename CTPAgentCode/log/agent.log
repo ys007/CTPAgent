@@ -1,0 +1,8 @@
+[Tue, 10 Mar 2020 12:49:00][routes.py][line:16][DEBUG] 程序启动，向redis上报自己的状态
+[Tue, 10 Mar 2020 12:49:02][routes.py][line:16][DEBUG] 程序启动，向redis上报自己的状态
+[Tue, 10 Mar 2020 12:49:10][routes.py][line:30][DEBUG] 收到ready指令，进入ready函数
+[Tue, 10 Mar 2020 12:49:23][routes.py][line:88][DEBUG] 收到cancel指令，进入cancel函数
+[Tue, 10 Mar 2020 12:50:30][routes.py][line:53][DEBUG] 收到run指令，进入run函数
+[Tue, 10 Mar 2020 12:50:30][doTest.py][line:37][DEBUG] 调用DoTest函数
+[Tue, 10 Mar 2020 12:50:59][routes.py][line:107][DEBUG] 正常退出，删除redis中的状态信息
+[Tue, 10 Mar 2020 12:50:59][routes.py][line:107][DEBUG] 正常退出，删除redis中的状态信息
