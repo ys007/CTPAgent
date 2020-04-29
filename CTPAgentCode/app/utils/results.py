@@ -46,17 +46,11 @@ def update_redis_abstract(id,timest,time_format,abs_status,abs_msg):
     one ={"agentid": '1', "timest": "", "datetime": "","status":"","msg":""}
     one['agentid']=id
     one['timest']=timest
-    one['datetime']= time_format
+    one['datetime']= str(time_format)
     one['status']=abs_status
     one['msg']=abs_msg
 
-    sendStatusToRedis(one)
-
-    # 不将结果存储到文件中，直接返回一个json格式的值
-    # fileObject = open('data.json', 'w',encoding='utf-8')
-    # fileObject.write(jsonData)
-    # fileObject.close()
-
+    # sendStatusToRedis(one)   #修改规则，不在这里向redis发送测试信息##################################################
 
 # save raw data.xml
 def saveraw(key_name, raw):
@@ -166,6 +160,24 @@ def saveEXCEL(filename, datalst, title=TITLE, style=DEFAULT_STYLE, **kwargs):
     print('Reprot result of xml parser to file: %s' % filename)
     book.close()
 
+###############################################
+#合并两个nmap扫描结果的xml字符串
+#把sourceString中的<host   /host>部分内容拼接到targetString中，并输出最终拼接好的字符串，若targetString为“”，直接返回sourceString
+###############################################
+def merge(sourceString, targetString):
+    #1、如果targetString为空，说明是第一次执行，不需要合并，直接把sourceString返回即可
+    if targetString == "":
+        return sourceString
+
+    #2、得到sourceString中“<host”和"</host>"中间的内容
+    hosts = sourceString[sourceString.find("<host") : sourceString.rfind("</host>") + len("</host>")]
+
+    #3、把targetString以最后一个</host>为分界点，拆成两个字符串
+    targetString1 = targetString[0 : targetString.rfind("</host>") + len("</host>")]
+    targetString2 = targetString[targetString.rfind("</host>") + len("</host>"):]
+
+    #4、把hosts的内容放到targetString1和targetString2中间
+    return targetString1 + hosts + targetString2
 
 def results(ip, port, arguments):
     # json_data={"status": "","msg":"","file":"","key":key_name}

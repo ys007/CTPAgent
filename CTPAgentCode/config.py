@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os, socket
 from dotenv import load_dotenv
 
@@ -9,7 +10,9 @@ import logging.config
 
 config = {    "key1":"value1"     }
 
-logging.config.fileConfig("logger.conf")
+log_path = "logger.conf"
+log_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logger.conf')
+logging.config.fileConfig(log_file_path)
 logger = logging.getLogger("agent")
 
 class Config(object):
@@ -18,16 +21,14 @@ class Config(object):
          'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    AGENT_IP = socket.gethostbyname(socket.gethostname())
+    AGENT_IP = '172.31.28.239' #socket.gethostbyname(socket.gethostname())
     AGENT_PORT = '5001'
 
-    YAML_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),"testConfig.yaml")
+    YAML_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),"suiteConfig.yaml")
 
-    REDIS_IP = '127.0.0.1'
-    REDIS_PASSWORD = 'Aisino_u3'
+    REDIS_IP = '192.168.23.26'
+    REDIS_PASSWORD = '123456'
 
     SVN_PATH = "C:\\Program Files\\TortoiseSVN\\bin"
-    SVN_USER = 'caizhongbao'
-    SVN_PWD = 'caizhongbao'
 
     NMAP_PATH = "C:\\Program Files (x86)\\Nmap\\nmap.exe"
