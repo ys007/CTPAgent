@@ -11,6 +11,8 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+#######################################################################
+
 def DoTest(key, sequence, taskList):
     # 读取配置文件内容，配置文件yamlConfigFileHandle是在monitorClient中定义的
     logger.debug('调用DoTest函数')
@@ -18,8 +20,8 @@ def DoTest(key, sequence, taskList):
     data = yaml.load(yaml_file)
     print("data_type:", type(data))
     print("data_content:\n", data['tasks'])
-    taskID = "task" + sequence
-    task= data['tasks'][taskID]
+    taskID = "task" + sequence    #类似task1、task2
+    task = data['tasks'][taskID]  #在yaml中该taskID中的所有内容
 
     return execYamlConfig(task, key, taskList)
 
@@ -31,6 +33,9 @@ def execYamlConfig(task, key, taskList):
     msg = '用例执行失败'
     resultFile = '' #执行结果的具体内容，用于返回给服务端使用
     time = ''  #nmap工具执行一条命令所用的时间，这个是命令执行后返回的
+    joinType = getTaskKey(task, 'joinType')
+    if joinType != 'easy':
+        return {"status": '500', "msg": "该客户端不支持此种joinType！", "file": '', "key": key}
 
     print('此处调用才中宝写的代码，此代码需在成功后返回ok，当判断返回值为ok后才能执行后续的代码')
     setting = {
@@ -47,7 +52,7 @@ def execYamlConfig(task, key, taskList):
     }
 
     ret = 'ok'  # 为了调试，临时改成这样##############################################################################################
-    # ret = svn(setting = setting)  # 这个函数目前没有返回值，需要加返回值，如果确实下载下来了文件，返回ok，否则返回false
+    # ret = download('1', getTaskKey(task, 'url'), getTaskKey(task, 'username'), getTaskKey(task, 'password'))
     if ret != 'ok':
         print('从配置库获取工具失败，无法执行后续测试！')
         logger.error('从配置库获取工具失败，无法执行后续测试！')

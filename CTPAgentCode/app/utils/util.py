@@ -47,7 +47,7 @@ def svn(url, username, password):
         path = svn_url[post + 1:]
         setting['url'] = svn_url
         setting['dist'] = str(dist + "\\" + path)
-        cmd = 'svn export %(url)s %(dist)s --username %(user)s --password %(pwd)s' % setting
+        cmd = 'svn export %(url)s %(dist)s --force --non-interactive --trust-server-cert --username %(user)s --password %(pwd)s' % setting
         os.system(cmd)
         print(dist)
         return "ok"
@@ -68,21 +68,17 @@ def download(mode, url, username, password):
         ret = svn(url, username, password)
     return ret
 
-# #下载函数，mode 0：git；1：svn；
-# def download(mode, url, repousername, repopassword):
-#     return 'ok'
-
-#向redis发送信息的公共函数
+#########################################################################################
+#向redis发送信息的公共函数，默认mode是‘update’，退出之前需要删除key，此种情况下mode为‘delete’
+#########################################################################################
 def sendStatusToRedis(payload, mode='update'):
     print("向redis发送")
+    statusKey = Config.AGENT_IP + ':' + Config.AGENT_PORT
     r = redis.StrictRedis(host=Config.REDIS_IP, db=0, password=Config.REDIS_PASSWORD, decode_responses=True)
     if mode == 'update':
-        # payload = {'agentid': '1', 'timest': '23.04', 'datetime': "849837-850", 'status': '200',
-        #  'msg': 'open:0,closed:0,filtered:0,unfilterd:0,Open|filtered:0,Closed|filtered:0'}
         print("向redis发送2222")
         temp = json.dumps(payload)
         print("向redis发送2222：", temp)
-        statusKey = Config.AGENT_IP + ':' + Config.AGENT_PORT
         print("向redis发送673567：", statusKey)
         if r.exists(statusKey):
             print("向redis发送333333")

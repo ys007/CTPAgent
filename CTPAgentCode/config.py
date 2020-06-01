@@ -21,7 +21,7 @@ class Config(object):
          'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    AGENT_IP = '172.31.28.239' #socket.gethostbyname(socket.gethostname())
+    AGENT_IP = '192.168.23.23' #socket.gethostbyname(socket.gethostname()) #'172.31.28.239'
     AGENT_PORT = '5001'
 
     YAML_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),"suiteConfig.yaml")
@@ -29,6 +29,6 @@ class Config(object):
     REDIS_IP = '192.168.23.26'
     REDIS_PASSWORD = '123456'
 
-    SVN_PATH = "C:\\Program Files\\TortoiseSVN\\bin"
+    SVN_PATH = "D:\\Program Files\\TortoiseSVN\\bin"
 
     NMAP_PATH = "C:\\Program Files (x86)\\Nmap\\nmap.exe"

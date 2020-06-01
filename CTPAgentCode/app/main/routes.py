@@ -47,6 +47,7 @@ def suiteReady():
     global owner
     jsonstr = request.json
     fileurl = jsonstr.get("fileurl")
+    print('yaml文件地址：%s', fileurl)
     repository = jsonstr.get("repository")
     repousername = jsonstr.get("repousername")
     repopassword = jsonstr.get("repopassword")
@@ -79,7 +80,7 @@ def suiteReady():
 def suiteRun():
     logger.debug('收到suiteRun指令，进入suiteRun函数')
     print('进入执行分支')
-    global flag
+    global flag, owner
     flag = 1
     jsonstr = request.json
     g.sequence = jsonstr.get("sequence")
@@ -96,7 +97,8 @@ def suiteRun():
         task = executor.submit(do_update, g.key, g.sequence, g.taskList)
 
         #向redis发送实时状态，测试执行完，实时状态变为idle
-        payload = {'type': 'security', 'subType': 'nmap', 'status': 'idle', 'owner': ''}
+        owner = ''
+        payload = {'type': 'security', 'subType': 'nmap', 'status': 'idle', 'owner': owner}
         sendStatusToRedis(payload)
         print(task.result())
         return task.result()
@@ -129,13 +131,15 @@ def suiteCancel():
     logger.debug('收到cancel指令，进入cancel函数')
     print ('进入取消分支')
     try:
+        global  owner
         #1、删除yaml文件
         if os.path.exists(Config.YAML_FILE_PATH):  # 如果文件存在
-            # 删除文件
+            #1、删除文件
             os.remove(Config.YAML_FILE_PATH)
 
             #2、上报本机状态
-            payload = {'type': 'security', 'subType':'nmap', 'status':'idle', 'owner': ''}
+            owner = ''
+            payload = {'type': 'security', 'subType':'nmap', 'status':'idle', 'owner': owner}
             sendStatusToRedis(payload)
             return {"status": '200', "msg": '执行成功'}
 

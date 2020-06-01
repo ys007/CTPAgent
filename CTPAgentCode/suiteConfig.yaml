@@ -1,45 +1,56 @@
 ﻿# 所有一级配置项必须符合key:value形式
+# * 为必填项
+# 测试工具、配置文件、数据文件、结果模板文件等一切相关文件统一放在配置库中同一个目录下
 tasks:
    task1:
       type: security
       subtype: nmap
+      repository: svn
+      url: http://192.168.23.14/工具/nmap
+      username: xx
+      password: xx
+      cmd:
+      arguments: -Pn -sS -A
+      isUpdate: n
       resultFileType: xml
       mergeFileType: xls
-      isUpdate: y
-      url: https://172.16.2.35:8443/svn/公用/通用测试平台/dist
-      username: caojingjing
-      password: caojingjing
-      arguments: -Pn -sS -A
+      joinType: easy
       split: y
       range: 23-23
       subRange: 5000-5010
       isDetail: n
       content: [192.168.23.x:y]
+   task2:
+      type: security
+      subtype: nmap
+      repository: svn
+      url: http://192.168.23.14/工具/nmap
+      username: xx
+      password: xx
+      cmd:
+      arguments: -Pn -sS -A
+      isUpdate: n
+      resultFileType: xml
+      mergeFileType: xls
+      joinType: easy
+      split: n
+      range: null
+      isDetail: y
+      content: [192.168.23.23:5020, 192.168.23.23:5021, 192.168.23.23:5022]
    task3:
-        type: security
-        subtype: nmap
-        resultFileType: xml
-        mergeFileType: xls
-        isUpdate: n
-        url: http://192.168.23.14/工具/nmap
-        username: xx
-        password: xx
-        arguments: -Pn -sS -A
-        split: n
-        range: null
-        isDetail: y
-        content: [192.168.23.23:5020, 192.168.23.23:5021, 192.168.23.23:5022]
-   task4:
-        type: security
-        subtype: nmap
-        resultFileType: xml
-        mergeFileType: xls
-        isUpdate: y
-        url: http://192.168.23.14/工具/nmap
-        username: xx
-        password: xx
-        arguments: -Pn -sS -A
-        split: n
-        range: 5000-5010
-        isDetail: n
-        content: [192.168.23.23:x]
+      type: security
+      subtype: nmap
+      repository: svn
+      url: http://192.168.23.14/工具/nmap
+      username: xx
+      password: xx
+      cmd:
+      arguments: -Pn -sS -A
+      isUpdate: n
+      resultFileType: xml
+      mergeFileType: xls
+      joinType: easy
+      split: n
+      range: 5000-5010
+      isDetail: n
+      content: [192.168.23.23:x]
