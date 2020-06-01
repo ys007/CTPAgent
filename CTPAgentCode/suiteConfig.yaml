@@ -54,7 +54,7 @@ tasks:
       range: 5000-5010
       isDetail: n
       content: [192.168.23.23:x]
-    task4:
+   task4:
       type: interface
       subtype: submarine
       repository: svn
